@@ -1,0 +1,16 @@
+{
+  "name": "com.unison.pocketcontroller",
+  "version": "0.1.0",
+  "displayName": "Pocket Controller",
+  "description": "Receives sensor data (gyro, accelerometer, GPS, etc.) streamed from PocketControllerHost over UDP and exposes it as per-player sensor state in Unity.",
+  "unity": "2021.2",
+  "author": {
+    "name": "Unison"
+  },
+  "keywords": [
+    "sensors",
+    "controller",
+    "networking",
+    "mobile"
+  ]
+}
