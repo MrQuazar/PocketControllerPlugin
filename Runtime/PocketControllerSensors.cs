@@ -151,7 +151,10 @@ namespace PocketController
             _listenThread = new Thread(ListenLoop) { IsBackground = true };
             _listenThread.Start();
 
-            _photoChannel.Start();
+            // Deliberately not started here - see PocketPhotoChannel.EnsureStarted().
+            // Most sessions never touch the camera, and eagerly holding a
+            // connection open (and retrying it) for the whole game regardless
+            // was pure overhead for anyone who never uses the feature.
         }
 
         void OnDestroy()

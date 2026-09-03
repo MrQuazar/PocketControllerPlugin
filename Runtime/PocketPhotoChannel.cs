@@ -10,18 +10,35 @@ namespace PocketController
     // the host: [int32 LittleEndian Length][Length bytes of payload].
     internal sealed class PocketPhotoChannel
     {
-        const int Port = 5557;
+        // Must match UnityControlPort in the host's Program.cs. Deliberately
+        // NOT 5555-5585 - that's adb's own emulator-console scan range, and a
+        // listener there gets hit by adb's periodic probes (see host comment).
+        const int Port = 58217;
         const int MaxPayloadSize = 8 * 1024 * 1024;
 
         readonly ConcurrentQueue<PocketPhotoResponse> _pending = new();
+        readonly ConcurrentQueue<byte[]> _outgoing = new();
         readonly object _sendLock = new();
 
         volatile bool _running;
         volatile TcpClient _client;
         Thread _thread;
 
-        public void Start()
+        // Guards EnsureStarted() against spawning a second ConnectLoop thread -
+        // touched only from the main thread (RequestPhoto/OnDestroy), so a plain
+        // bool is enough, no lock needed.
+        bool _everStarted;
+
+        /// Starts the connect/retry loop if it isn't already running. Safe to
+        /// call repeatedly - only the first call actually starts the thread.
+        /// Deliberately NOT started automatically: most sessions never touch the
+        /// camera, and holding this connection open (and retrying it) for the
+        /// whole game for every player was pure overhead - and console noise -
+        /// for anyone who never uses the feature.
+        public void EnsureStarted()
         {
+            if (_everStarted) return;
+            _everStarted = true;
             _running = true;
             _thread = new Thread(ConnectLoop) { IsBackground = true };
             _thread.Start();
@@ -37,8 +54,18 @@ namespace PocketController
 
         public void SendRequest(byte[] payload)
         {
+            EnsureStarted();
+
             var client = _client;
-            if (client == null || !client.Connected) return;
+            if (client == null || !client.Connected)
+            {
+                // Connection hasn't been established yet (this is likely the very
+                // first request since EnsureStarted() just fired) - queue it so
+                // ConnectLoop can flush it the moment the socket connects, rather
+                // than silently dropping the first photo request of the session.
+                _outgoing.Enqueue(payload);
+                return;
+            }
 
             try
             {
@@ -62,6 +89,16 @@ namespace PocketController
                     _client = client;
 
                     var stream = client.GetStream();
+
+                    // Flush anything queued while we weren't yet connected -
+                    // most commonly the request that triggered EnsureStarted()
+                    // in the first place.
+                    lock (_sendLock)
+                    {
+                        while (_outgoing.TryDequeue(out var queued))
+                            WriteFramed(stream, queued);
+                    }
+
                     while (_running)
                     {
                         if (!TryReadFramed(stream, out var payload)) break;
