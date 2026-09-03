@@ -31,8 +31,8 @@ doesn't come through as generic gamepad input.
 The PocketControllerHost source and the Android app source aren't public —
 they're distributed as prebuilt binaries:
 
-- **PocketControllerHost (.exe)**: [Download from Google Drive](https://drive.google.com/PASTE-YOUR-LINK-HERE)
-- **PocketController Android app (.apk)**: [Download from Google Drive](https://drive.google.com/PASTE-YOUR-LINK-HERE)
+- **PocketControllerHost (.exe)**: [Download from Google Drive]([https://drive.google.com/PASTE-YOUR-LINK-HERE](https://drive.google.com/drive/folders/1Vwsp8s5641FX_vexARmg8mmBWZZ-A1t3?usp=sharing))
+- **PocketController Android app (.apk)**: [Download from Google Drive]([https://drive.google.com/PASTE-YOUR-LINK-HERE](https://drive.google.com/drive/folders/1Vwsp8s5641FX_vexARmg8mmBWZZ-A1t3?usp=sharing))
 
 ### Install
 
